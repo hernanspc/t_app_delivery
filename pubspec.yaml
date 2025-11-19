@@ -30,8 +30,34 @@ environment:
 dependencies:
   change_app_package_name: ^1.5.0
   cupertino_icons: ^1.0.8
+  firebase_core: ^2.24.2
+  firebase_messaging: ^14.7.10
   flutter:
     sdk: flutter
+  flutter_credit_card: ^4.0.1
+  flutter_image_slideshow: ^0.1.6
+  flutter_launcher_icons: ^0.13.1
+  flutter_local_notifications: ^19.5.0
+  flutter_native_splash: ^2.3.10
+  flutter_phone_direct_caller: ^2.2.1
+  flutter_polyline_points: ^2.0.0
+  fluttertoast: ^9.0.0
+  geocoding: ^2.1.1
+  geolocator: ^10.1.0
+  get: ^4.6.1
+  get_storage: ^2.1.1
+  google_fonts: ^6.1.0
+  google_maps_flutter: ^2.2.8
+  http: ^1.2.0
+  image_picker: ^1.0.7
+  intl: ^0.19.0
+  jwt_decode: ^0.3.1
+  location: ^5.0.3
+  logger: ^2.0.2+1
+  modal_bottom_sheet: ^3.0.0-pre
+  path: ^1.8.3
+  sn_progress_dialog: ^1.1.3
+  socket_io_client: ^1.0.2
 
 dev_dependencies:
 
