@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:delivery_app/src/providers/users_providers.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -71,13 +73,16 @@ class PushNotificationProvider {
   }
 
   void saveToken(String idUser) async {
-    String? token = await FirebaseMessaging.instance.getToken();
-    print('🚀 ---------------------------------------------------------🚀');
-    print('🚀 FCM: ${token}');
-    print('🚀 ---------------------------------------------------------🚀');
-    UsersProvider usersProvider = UsersProvider();
-    if (token != null) {
-      await usersProvider.updateNotificationToken(idUser, token);
+    if (Platform.isAndroid) {
+      //TODO: POR AHORA ESTO SOLO PARA ANDROID
+      String? token = await FirebaseMessaging.instance.getToken();
+      print('🚀 ---------------------------------------------------------🚀');
+      print('🚀 FCM: ${token}');
+      print('🚀 ---------------------------------------------------------🚀');
+      UsersProvider usersProvider = UsersProvider();
+      if (token != null) {
+        await usersProvider.updateNotificationToken(idUser, token);
+      }
     }
   }
 }

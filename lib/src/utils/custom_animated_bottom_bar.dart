@@ -16,8 +16,8 @@ class CustomAnimatedBottomBar extends StatelessWidget {
     required this.items,
     required this.onItemSelected,
     this.curve = Curves.linear,
-  })  : assert(items.length >= 2 && items.length <= 5),
-        super(key: key);
+  }) : assert(items.length >= 2 && items.length <= 5),
+       super(key: key);
 
   final int selectedIndex;
   final double iconSize;
@@ -49,7 +49,7 @@ class CustomAnimatedBottomBar extends StatelessWidget {
               item: item,
               iconSize: iconSize,
               isSelected: index == selectedIndex,
-              backgroundColor: Colors.black,
+              backgroundColor: Colors.amber,
               itemCornerRadius: itemCornerRadius,
               animationDuration: animationDuration,
               curve: curve,
@@ -60,9 +60,7 @@ class CustomAnimatedBottomBar extends StatelessWidget {
     );
 
     if (Platform.isAndroid) {
-      bottomBar = SafeArea(
-        child: bottomBar,
-      );
+      bottomBar = SafeArea(child: bottomBar);
     }
 
     return Container(
@@ -72,10 +70,7 @@ class CustomAnimatedBottomBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(50),
         boxShadow: [
           if (showElevation)
-            const BoxShadow(
-              color: Colors.black12,
-              blurRadius: 2,
-            ),
+            const BoxShadow(color: Colors.black12, blurRadius: 2),
         ],
       ),
       child: bottomBar,
@@ -114,8 +109,9 @@ class _ItemWidget extends StatelessWidget {
         duration: animationDuration,
         curve: curve,
         decoration: BoxDecoration(
-          color:
-              isSelected ? item.activeColor.withOpacity(0.2) : backgroundColor,
+          color: isSelected
+              ? item.activeColor.withOpacity(0.2)
+              : backgroundColor,
           borderRadius: BorderRadius.circular(itemCornerRadius),
         ),
         child: SingleChildScrollView(
@@ -135,8 +131,8 @@ class _ItemWidget extends StatelessWidget {
                     color: isSelected
                         ? item.activeColor.withOpacity(1)
                         : item.inactiveColor == null
-                            ? item.activeColor
-                            : item.inactiveColor!,
+                        ? item.activeColor
+                        : item.inactiveColor!,
                   ),
                   child: item.icon,
                 ),
