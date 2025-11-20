@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../pages/loading/loading_screen.dart';
 
 final appRouter = GoRouter(
-  initialLocation: '/loading_screen',
+  initialLocation: '/login_screen',
   routes: [
     GoRoute(
       path: '/loading_screen',

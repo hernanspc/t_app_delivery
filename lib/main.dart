@@ -1,15 +1,18 @@
+import 'dart:io';
+import 'package:delivery_app/src/config/local_notifications/local_notifications.dart';
+import 'package:delivery_app/src/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
 import 'package:delivery_app/src/config/app_router.dart';
 import 'package:delivery_app/src/environment/environment.dart';
 import 'package:delivery_app/src/providers/pushNotificationProvider.dart';
-import 'package:delivery_app/src/utils/firebase_config.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:provider/provider.dart';
 
 import 'src/blocs/notifications/notifications_bloc.dart';
 
@@ -19,28 +22,41 @@ PushNotificationProvider pushNotificationProvider = PushNotificationProvider();
 late AndroidNotificationChannel channel;
 bool isFlutterLocalNotificationsInitialized = false;
 
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(options: FirebaseConfig.currentPlatform);
-  // If you're going to use other Firebase services in the background, such as Firestore,
-  // make sure you call `initializeApp` before using other Firebase services.
-  print(
-    'Handling a background message, recibiendo en segundo plano ${message.messageId}',
-  );
-  // pushNotificationProvider.showNotification(message);
-}
-
 void main() async {
-  FlutterNativeSplash.preserve(
-    widgetsBinding: WidgetsFlutterBinding.ensureInitialized(),
-  );
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: FirebaseConfig.currentPlatform);
-  // Set the background messaging handler early on, as a named top-level function
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  pushNotificationProvider.initPushNotification();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   FlutterNativeSplash.remove();
-  runApp(const MyApp());
+
+  // pushNotificationProvider.initPushNotification();
+
+  if (Firebase.apps.isEmpty) {
+    await NotificationsBloc.initializeFCM();
+    //TODO: COMENTAR EN EMULADOR IOS
+    if (Platform.isAndroid) {
+      await LocalNotifications.initializeLocalNotifications();
+    }
+  }
+
+  runApp(
+    MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => AuthService())],
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (context) => NotificationsBloc(
+              requestLocalNotificationPermissions:
+                  LocalNotifications.requestPermissionLocalNotifications,
+              showLocalNotification: LocalNotifications.showLocalNotification,
+              authService: Provider.of<AuthService>(context, listen: false),
+            ),
+          ),
+        ],
+        child: MyApp(),
+      ),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -71,7 +87,6 @@ class _MyAppState extends State<MyApp> {
       supportedLocales: [
         const Locale('en', ''), // Inglés
         const Locale('es', ''), // Español
-        // Agrega otros idiomas si es necesario
       ],
       routerConfig: appRouter,
       // builder: (context, child) =>

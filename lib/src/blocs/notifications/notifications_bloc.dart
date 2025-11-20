@@ -46,6 +46,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
 
     // Verificar estado de las notificaciones
     _initialStatusCheck();
+    getFCMToken();
 
     // Listener para notificaciones en Foreground
     _onForegroundMessage();
@@ -62,7 +63,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     Emitter<NotificationsState> emit,
   ) {
     emit(state.copyWith(status: event.status));
-    _getFCMToken();
+    getFCMToken();
   }
 
   void _onPushMessageReceived(
@@ -81,11 +82,11 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     add(NotificationStatusChanged(settings.authorizationStatus));
   }
 
-  void _getFCMToken() async {
+  void getFCMToken() async {
     if (state.status != AuthorizationStatus.authorized) return;
 
     final token = await messaging.getToken();
-    print('✨ token: $token');
+    print('✨✨✨✨ token: $token');
     if (token != null) {
       await authService.saveDeviceToken(token);
     }
