@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:delivery_app/src/environment/environment.dart';
+import 'package:delivery_app/src/models/login/login_response.dart';
 import 'package:delivery_app/src/models/response_api.dart';
 import 'package:delivery_app/src/models/user.dart';
 import 'package:http/http.dart' as http;
@@ -125,7 +126,7 @@ class UsersProvider {
   }
 
   // Login
-  Future<ResponseApi> login(String email, String password) async {
+  Future<LoginResponse> login(String email, String password) async {
     final uri = Uri.parse('$url/login');
     print(' 🟦 users_providers login: $uri');
     final response = await http.post(
@@ -139,9 +140,9 @@ class UsersProvider {
     );
     print('🟦 users_providers login: ${response.body}');
     if (response.statusCode == 200 && response.body.isNotEmpty) {
-      return ResponseApi.fromJson(jsonDecode(response.body));
+      return LoginResponse.fromJson(jsonDecode(response.body));
     } else {
-      return ResponseApi(success: false, message: 'Error al iniciar sesión');
+      return LoginResponse.fromJson(jsonDecode(response.body));
     }
   }
 

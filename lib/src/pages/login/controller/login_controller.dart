@@ -1,35 +1,21 @@
-import 'package:delivery_app/src/models/response_api.dart';
+import 'dart:convert';
+
+import 'package:delivery_app/src/models/login/login_response.dart';
 import 'package:delivery_app/src/providers/users_providers.dart';
-import 'package:flutter/material.dart';
 
 class LoginController {
   final UsersProvider usersProvider = UsersProvider();
 
-  bool isLoading = false;
-
-  Future<ResponseApi?> login({
+  Future<LoginResponse> login({
     required String email,
     required String password,
   }) async {
-    // if (!_isValidEmail(email)) {
-    //   return ResponseApi(success: false, message: "El email no es válido");
-    // }
+    final response = await usersProvider.login(email, password);
 
-    try {
-      isLoading = true;
+    print(
+      "🟨 usersProvider.login:\n${const JsonEncoder.withIndent('  ').convert(response.toJson())}",
+    );
 
-      ResponseApi response = await usersProvider.login(email, password);
-      print('🟨 usersProvider.login ${response?.toJson()}');
-
-      return response;
-    } catch (e) {
-      return ResponseApi(success: false, message: "Ocurrió un error: $e");
-    } finally {
-      isLoading = false;
-    }
-  }
-
-  bool _isValidEmail(String email) {
-    return email.contains("@") && email.contains(".");
+    return response;
   }
 }

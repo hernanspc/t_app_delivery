@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:delivery_app/src/pages/login/controller/login_controller.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:delivery_app/components/common/custom_filled_button.dart';
@@ -20,12 +23,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool isLoading = false;
 
-  void _showSnack(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
-  }
-
   Future<void> handleLogin() async {
     FocusScope.of(context).unfocus();
 
@@ -38,23 +35,25 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => isLoading = false);
 
-    // Manejo si response viene null
-    if (response == null) {
-      _showSnack("Error inesperado");
-      return;
-    }
+    print(
+      "🤖 handleLogin:\n${const JsonEncoder.withIndent('  ').convert(response.toJson())}",
+    );
 
-    print('🤖 handleLogin ${response.toJson()}');
-
-    // Éxito
     if (response.success == true) {
-      _showSnack("Inicio de sesión exitoso");
-      context.go("/rol_screen");
+      _showCustomModal(
+        title: "Mensaje",
+        message: response.message ?? "Acceso correcto",
+        type: response.type,
+      );
+      //   context.go("/rol_screen");
       return;
     }
 
-    // Error
-    _showSnack(response.message ?? "Error desconocido");
+    _showCustomModal(
+      title: "Mensaje",
+      message: response.message ?? "Ocurrió un error",
+      type: response.type,
+    );
   }
 
   void goToRegister() {
@@ -224,6 +223,114 @@ class _LoginScreenState extends State<LoginScreen> {
               fontSize: 16,
             ),
           ),
+        ),
+      ],
+    );
+  }
+
+  void _showCustomModal({
+    required String title,
+    required String message,
+    required String type,
+  }) {
+    showCupertinoDialog(
+      context: context,
+      builder: (_) => CustomCupertinoModal(
+        title: title,
+        message: message,
+        type: parseModalType(type),
+      ),
+    );
+  }
+}
+
+enum CustomModalType { INFORMATIVO, ERROR, ADVERTENCIA }
+
+CustomModalType parseModalType(String? value) {
+  if (value == null) return CustomModalType.INFORMATIVO;
+
+  switch (value.toUpperCase()) {
+    case "ERROR":
+      return CustomModalType.ERROR;
+    case "ADVERTENCIA":
+      return CustomModalType.ADVERTENCIA;
+    case "INFORMATIVO":
+      return CustomModalType.INFORMATIVO;
+    default:
+      return CustomModalType.INFORMATIVO;
+  }
+}
+
+class CustomCupertinoModal extends StatelessWidget {
+  final String title;
+  final String message;
+  final CustomModalType type;
+
+  const CustomCupertinoModal({
+    super.key,
+    required this.title,
+    required this.message,
+    this.type = CustomModalType.INFORMATIVO,
+  });
+
+  Color _getColor() {
+    switch (type) {
+      case CustomModalType.INFORMATIVO:
+        return Colors.green;
+      case CustomModalType.ERROR:
+        return Colors.red;
+      case CustomModalType.ADVERTENCIA:
+        return Colors.amber;
+      default:
+        return Colors.blueGrey;
+    }
+  }
+
+  IconData _getIcon() {
+    switch (type) {
+      case CustomModalType.INFORMATIVO:
+        return CupertinoIcons.checkmark_circle_fill;
+      case CustomModalType.ERROR:
+        return CupertinoIcons.xmark_circle_fill;
+      case CustomModalType.ADVERTENCIA:
+        return CupertinoIcons.exclamationmark_triangle_fill;
+      default:
+        return CupertinoIcons.info;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoAlertDialog(
+      title: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(_getIcon(), color: _getColor(), size: 45),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: _getColor(),
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+        ],
+      ),
+      content: Padding(
+        padding: const EdgeInsets.only(top: 10),
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 15, color: Colors.black87),
+        ),
+      ),
+      actions: [
+        CupertinoDialogAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Aceptar"),
         ),
       ],
     );
