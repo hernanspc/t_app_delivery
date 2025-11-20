@@ -44,6 +44,7 @@ class OrdersProvider extends GetConnect {
         "Authorization": 'JWT ${userSession.token ?? ''}',
       },
     );
+    print('🟩 findByClientAndStatus: ${response.body}');
 
     if (response.statusCode == 401) {
       Get.snackbar(

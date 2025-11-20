@@ -115,11 +115,15 @@ class UsersProvider extends GetConnect {
   Future<ResponseApi> login(String email, String password) async {
     Response response = await post(
       '$url/login',
-      {"email": email, "password": password},
+      {
+        "piEMPRESA": Environment.EMPRESA_CODE,
+        "psUSUARIO": email,
+        "clave": password,
+      },
       headers: {"Content-type": 'application/json'},
     );
     if (response.body == null) {
-      Get.snackbar('Error', 'No se pudo ejecutar la peticion');
+      // Get.snackbar('Error', 'No se pudo ejecutar la peticion');
       return ResponseApi();
     }
 
