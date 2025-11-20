@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1064948121153",
+    "project_id": "deliveryappprod-28d6d",
+    "storage_bucket": "deliveryappprod-28d6d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1064948121153:android:774b45a8b665a565add0c0",
+        "android_client_info": {
+          "package_name": "com.hernanpormachi.deliveryfast"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDTHnxwM_Eld_NkYuRkIgHX4YuxcMdZXqU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
