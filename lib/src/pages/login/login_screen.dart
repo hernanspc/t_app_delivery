@@ -1,3 +1,4 @@
+import 'package:delivery_app/src/pages/login/controller/login_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:delivery_app/components/common/custom_filled_button.dart';
@@ -14,21 +15,48 @@ class _LoginScreenState extends State<LoginScreen> {
   // Controllers
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  late LoginController controller;
 
   bool isLoading = false;
 
-  void handleLogin() async {
+  Future<void> handleLogin() async {
     FocusScope.of(context).unfocus();
+
     setState(() => isLoading = true);
 
-    await Future.delayed(const Duration(seconds: 2));
+    final response = await controller.login(
+      email: emailController.text.trim(),
+      password: passwordController.text.trim(),
+    );
 
     setState(() => isLoading = false);
+
+    // if (response == null) return;
+    print('🤖 handleLogin ${response?.toJson()}');
+    // if (response.success) {
+    //   // NAVEGAR A PANTALLA ROLES
+    //   Navigator.pushNamed(context, "/roles");
+
+    //   ScaffoldMessenger.of(
+    //     context,
+    //   ).showSnackBar(const SnackBar(content: Text("Inicio de sesión exitoso")));
+    // } else {
+    //   // MOSTRAR ERROR
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(content: Text(response.message ?? "Error desconocido")),
+    //   );
+    // }
   }
 
   void goToRegister() {
     // Navigator.pushNamed(context, '/register');
     print("Ir a registro");
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    controller = LoginController();
   }
 
   @override

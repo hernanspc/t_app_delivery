@@ -127,6 +127,7 @@ class UsersProvider {
   // Login
   Future<ResponseApi> login(String email, String password) async {
     final uri = Uri.parse('$url/login');
+    print(' 🟦 users_providers login: $uri');
     final response = await http.post(
       uri,
       headers: {"Content-Type": 'application/json'},
@@ -136,7 +137,7 @@ class UsersProvider {
         "clave": password,
       }),
     );
-
+    print('🟦 users_providers login: ${response.body}');
     if (response.statusCode == 200 && response.body.isNotEmpty) {
       return ResponseApi.fromJson(jsonDecode(response.body));
     } else {

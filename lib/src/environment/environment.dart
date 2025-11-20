@@ -1,7 +1,10 @@
+import 'dart:io';
+
 class Environment {
-  // static const String API_URL = "http://localhost:3000/";
-  // static const String API_URL = "http://10.0.2.2:3000/";
-  static const String API_URL = "http://192.168.1.9:3000/";
+  static final String API_URL = Platform.isAndroid
+      ? "http://10.0.2.2:3000/"
+      : "http://localhost:3000/";
+  // static const String API_URL = "http://192.168.1.9:3000/";
   static const int EMPRESA_CODE = 2;
   // static const String API_URL =
   //     "https://backend-app-delivery-node-azgzc5efcqg7azg5.canadacentral-01.azurewebsites.net/";
