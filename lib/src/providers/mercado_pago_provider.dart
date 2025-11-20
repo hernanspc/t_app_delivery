@@ -1,170 +1,157 @@
+import 'dart:convert';
 import 'package:delivery_app/src/environment/environment.dart';
 import 'package:delivery_app/src/models/mercado_pago_card_token.dart';
 import 'package:delivery_app/src/models/mercado_pago_document_type.dart';
-import 'package:delivery_app/src/models/mercado_pago_payment_method.dart';
 import 'package:delivery_app/src/models/mercado_pago_payment_method_installments.dart';
 import 'package:delivery_app/src/models/order.dart';
-import 'package:delivery_app/src/models/response_api.dart';
 import 'package:delivery_app/src/models/user.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
-class MercadoPagoProvider extends GetConnect {
-  String url = Environment.API_MERCADO_PAGO;
-  // String url = Environment.API_URL;
+class MercadoPagoProvider {
+  final String url = Environment.API_MERCADO_PAGO;
+  late User userSession;
 
-  User userSession = User.fromJson(GetStorage().read('user') ?? {});
+  MercadoPagoProvider() {
+    _loadUserSession();
+  }
+
+  Future<void> _loadUserSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userJson = prefs.getString('user');
+    if (userJson != null) {
+      userSession = User.fromJson(jsonDecode(userJson));
+    } else {
+      userSession = User();
+    }
+  }
 
   Future<MercadoPagoPaymentMethodInstallments> getInstallment(
     String bin,
     double amount,
   ) async {
-    Response response = await get(
-      '$url/payment_methods/installments',
-      headers: {
-        "Content-type": 'application/json',
-        "Authorization": 'Bearer ${Environment.MERCADO_PAGO_ACCESS_TOKEN}',
-      },
-      query: {'bin': bin, 'amount': '${amount}'},
+    final uri = Uri.parse(
+      '$url/payment_methods/installments?bin=$bin&amount=$amount',
     );
 
-    print('-----------------getInstallment----------------');
-    print('🍓response ${response} ');
-    print('🍓response statuscode ${response.statusCode} ');
-    print('🍓response body ${response.body} ');
+    final response = await http.get(
+      uri,
+      headers: {
+        "Content-Type": 'application/json',
+        "Authorization": 'Bearer ${Environment.MERCADO_PAGO_ACCESS_TOKEN}',
+      },
+    );
 
-    if (response.statusCode == 401) {
-      Get.snackbar(
-        'Peticion rechazada',
-        'Tu usuario no tiene permitido leer esta información',
-      );
-      return MercadoPagoPaymentMethodInstallments();
+    if (response.statusCode == 200) {
+      final List<dynamic> body = jsonDecode(response.body);
+      return MercadoPagoPaymentMethodInstallments.fromJson(body[0]);
+    } else if (response.statusCode == 401) {
+      throw Exception('Tu usuario no tiene permitido leer esta información');
+    } else {
+      throw Exception('No se pudo obtener las cuotas de la tarjeta');
     }
-    if (response.statusCode != 200) {
-      Get.snackbar(
-        'Peticion rechazada',
-        'No se pudo obtener las cuotas de la tarjeta',
-      );
-      return MercadoPagoPaymentMethodInstallments();
-    }
-
-    MercadoPagoPaymentMethodInstallments data =
-        MercadoPagoPaymentMethodInstallments.fromJson(response.body[0]);
-
-    return data;
   }
 
   Future<List<MercadoPagoDocumentType>> getIdentificationTypes() async {
-    Response response = await get(
-      '$url/identification_types',
+    final uri = Uri.parse('$url/identification_types');
+
+    final response = await http.get(
+      uri,
       headers: {
-        "Content-type": 'application/json',
+        "Content-Type": 'application/json',
         "Authorization": 'Bearer ${Environment.MERCADO_PAGO_ACCESS_TOKEN}',
       },
     );
 
-    if (response.statusCode == 401) {
-      Get.snackbar(
-        'Peticion rechazada',
-        'Tu usuario no tiene permitido leer esta información',
-      );
-      return [];
+    if (response.statusCode == 200) {
+      final List<dynamic> body = jsonDecode(response.body);
+      return MercadoPagoDocumentType.fromJsonList(body);
+    } else if (response.statusCode == 401) {
+      throw Exception('Tu usuario no tiene permitido leer esta información');
+    } else {
+      throw Exception('No se pudo obtener los tipos de identificación');
     }
-    print('-----------------getIdentificationTypes----------------');
-    print('🍓response ${response} ');
-    print('🍓response statuscode ${response.statusCode} ');
-    print('🍓response body ${response.body} ');
-
-    List<MercadoPagoDocumentType> documents =
-        MercadoPagoDocumentType.fromJsonList(response.body);
-    return documents;
   }
 
-  Future<Response> createPayment({
-    @required String? token,
-    @required String? issuerId,
-    @required String? paymentMethodId,
-    @required double? transactionAmount,
-    @required String? paymentTypeId,
-    @required String? emailCustomer,
-    @required String? identificationType,
-    @required String? identificationNumber,
-    @required int? installments,
-    @required Order? order,
+  Future<http.Response> createPayment({
+    required String token,
+    required String issuerId,
+    required String paymentMethodId,
+    required double transactionAmount,
+    required String paymentTypeId,
+    required String emailCustomer,
+    required String identificationType,
+    required String identificationNumber,
+    required int installments,
+    required Order order,
   }) async {
-    Response response = await post(
-      '${Environment.API_URL}api/payments/create',
-      {
-        'token': token,
-        'issuer_id': issuerId,
-        'payment_method_id': paymentMethodId,
-        'transaction_amount': transactionAmount,
-        'installments': installments,
-        'payer': {
-          'email': emailCustomer,
-          'identification': {
-            'type': identificationType,
-            'number': identificationNumber,
-          },
-        },
-        'order': order!.toJson(),
-      },
+    await _loadUserSession();
 
+    final uri = Uri.parse('${Environment.API_URL}api/payments/create');
+
+    final body = jsonEncode({
+      'token': token,
+      'issuer_id': issuerId,
+      'payment_method_id': paymentMethodId,
+      'transaction_amount': transactionAmount,
+      'installments': installments,
+      'payer': {
+        'email': emailCustomer,
+        'identification': {
+          'type': identificationType,
+          'number': identificationNumber,
+        },
+      },
+      'order': order.toJson(),
+    });
+
+    final response = await http.post(
+      uri,
       headers: {
-        "Content-type": 'application/json',
+        "Content-Type": 'application/json',
         "Authorization": 'JWT ${userSession.token ?? ''}',
       },
-      // query: {
-      //   'public_key': Environment.MERCADO_PAGO_PUBLIC_KEY,
-      // },
+      body: body,
     );
-    print('-----------------createPayment----------------');
-    print('🍓response ${response} ');
-    print('🍓response statuscode ${response.statusCode} ');
-    print('🍓response body ${response.body} ');
 
     return response;
   }
 
   Future<MercadoPagoCardToken> createCardToken({
-    String? cvv,
-    String? expirationYear,
-    int? expirationMonth,
-    String? cardNumber,
-    String? cardHolderName,
-    String? documentNumber,
-    String? documentId,
+    required String cvv,
+    required String expirationYear,
+    required int expirationMonth,
+    required String cardNumber,
+    required String cardHolderName,
+    required String documentNumber,
+    required String documentId,
   }) async {
-    Response response = await post(
+    final uri = Uri.parse(
       '$url/card_tokens?public_key=${Environment.MERCADO_PAGO_PUBLIC_KEY}',
-      {
-        'security_code': cvv,
-        'expiration_years': expirationYear,
-        'expiration_month': expirationMonth,
-        'card_number': cardNumber,
-        'card_holder': {
-          'name': cardHolderName,
-          'identification': {'number': documentNumber, 'type': documentId},
-        },
-      },
-      headers: {"Content-type": 'application/json'},
-      // query: {
-      //   'public_key': Environment.MERCADO_PAGO_PUBLIC_KEY,
-      // },
     );
 
-    if (response.statusCode != 201) {
-      Get.snackbar('Error', 'No se pudo validar la tarjeta');
-      return MercadoPagoCardToken();
+    final body = jsonEncode({
+      'security_code': cvv,
+      'expiration_years': expirationYear,
+      'expiration_month': expirationMonth,
+      'card_number': cardNumber,
+      'card_holder': {
+        'name': cardHolderName,
+        'identification': {'number': documentNumber, 'type': documentId},
+      },
+    });
+
+    final response = await http.post(
+      uri,
+      headers: {"Content-Type": 'application/json'},
+      body: body,
+    );
+
+    if (response.statusCode == 201) {
+      return MercadoPagoCardToken.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('No se pudo validar la tarjeta');
     }
-
-    print('-----------------createCardToken----------------');
-    print('🍓response ${response} ');
-    print('🍓response statuscode ${response.statusCode} ');
-    print('🍓response body ${response.body} ');
-
-    MercadoPagoCardToken res = MercadoPagoCardToken.fromJson(response.body);
-    return res;
   }
 }

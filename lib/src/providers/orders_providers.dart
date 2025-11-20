@@ -1,151 +1,153 @@
+import 'dart:convert';
 import 'package:delivery_app/src/environment/environment.dart';
 import 'package:delivery_app/src/models/order.dart';
 import 'package:delivery_app/src/models/response_api.dart';
 import 'package:delivery_app/src/models/user.dart';
-import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
-class OrdersProvider extends GetConnect {
-  String url = '${Environment.API_URL}api/orders';
-  User userSession = User.fromJson(GetStorage().read('user') ?? {});
+class OrdersProvider {
+  final String url = '${Environment.API_URL}api/orders';
+  late User userSession;
+
+  OrdersProvider() {
+    _loadUserSession();
+  }
+
+  Future<void> _loadUserSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userJson = prefs.getString('user');
+    if (userJson != null) {
+      userSession = User.fromJson(jsonDecode(userJson));
+    } else {
+      userSession = User();
+    }
+  }
 
   Future<List<Order>> findByDeliveryAndStatus(
     String idDelivery,
     String status,
   ) async {
-    Response response = await get(
-      '$url/findByDeliveryAndStatus/$idDelivery/$status',
+    await _loadUserSession();
+
+    final uri = Uri.parse('$url/findByDeliveryAndStatus/$idDelivery/$status');
+    final response = await http.get(
+      uri,
       headers: {
-        "Content-type": 'application/json',
+        "Content-Type": 'application/json',
         "Authorization": 'JWT ${userSession.token ?? ''}',
       },
     );
 
-    if (response.statusCode == 401) {
-      Get.snackbar(
-        'Peticion rechazada',
-        'Tu usuario no tiene permitido leer esta información',
-      );
-      return [];
+    if (response.statusCode == 200) {
+      final List<dynamic> body = jsonDecode(response.body);
+      return Order.fromJsonList(body);
+    } else if (response.statusCode == 401) {
+      throw Exception('Tu usuario no tiene permitido leer esta información');
+    } else {
+      throw Exception('Error al obtener órdenes por delivery y estado');
     }
-
-    List<Order> orders = Order.fromJsonList(response.body);
-    return orders;
   }
 
   Future<List<Order>> findByClientAndStatus(
     String idClient,
     String status,
   ) async {
-    Response response = await get(
-      '$url/findByClientAndStatus/$idClient/$status',
+    await _loadUserSession();
+
+    final uri = Uri.parse('$url/findByClientAndStatus/$idClient/$status');
+    final response = await http.get(
+      uri,
       headers: {
-        "Content-type": 'application/json',
+        "Content-Type": 'application/json',
         "Authorization": 'JWT ${userSession.token ?? ''}',
       },
     );
-    print('🟩 findByClientAndStatus: ${response.body}');
 
-    if (response.statusCode == 401) {
-      Get.snackbar(
-        'Peticion rechazada',
-        'Tu usuario no tiene permitido leer esta información',
-      );
-      return [];
+    if (response.statusCode == 200) {
+      final List<dynamic> body = jsonDecode(response.body);
+      return Order.fromJsonList(body);
+    } else if (response.statusCode == 401) {
+      throw Exception('Tu usuario no tiene permitido leer esta información');
+    } else {
+      throw Exception('Error al obtener órdenes por cliente y estado');
     }
-
-    List<Order> orders = Order.fromJsonList(response.body);
-    return orders;
   }
 
   Future<List<Order>> findByStatus(String status) async {
-    Response response = await get(
-      '$url/findByStatus/$status',
+    await _loadUserSession();
+
+    final uri = Uri.parse('$url/findByStatus/$status');
+    final response = await http.get(
+      uri,
       headers: {
-        "Content-type": 'application/json',
+        "Content-Type": 'application/json',
         "Authorization": 'JWT ${userSession.token ?? ''}',
       },
     );
 
-    if (response.statusCode == 401) {
-      Get.snackbar(
-        'Peticion rechazada',
-        'Tu usuario no tiene permitido leer esta información',
-      );
-      return [];
+    if (response.statusCode == 200) {
+      final List<dynamic> body = jsonDecode(response.body);
+      return Order.fromJsonList(body);
+    } else if (response.statusCode == 401) {
+      throw Exception('Tu usuario no tiene permitido leer esta información');
+    } else {
+      throw Exception('Error al obtener órdenes por estado');
     }
-
-    List<Order> orders = Order.fromJsonList(response.body);
-    return orders;
   }
 
   Future<ResponseApi> create(Order order) async {
-    Response response = await post(
-      '$url/create',
-      order.toJson(),
+    await _loadUserSession();
+
+    final uri = Uri.parse('$url/create');
+    final response = await http.post(
+      uri,
       headers: {
-        "Content-type": 'application/json',
+        "Content-Type": 'application/json',
         "Authorization": 'JWT ${userSession.token ?? ''}',
       },
+      body: jsonEncode(order.toJson()),
     );
 
-    ResponseApi responseApi = ResponseApi.fromJson(response.body);
-    return responseApi;
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return ResponseApi.fromJson(jsonDecode(response.body));
+    } else {
+      return ResponseApi(success: false, message: 'Error al crear la orden');
+    }
   }
 
-  Future<ResponseApi> updateToDispatched(Order order) async {
-    Response response = await put(
-      '$url/updateToDispatched',
-      order.toJson(),
+  Future<ResponseApi> updateToDispatched(Order order) async =>
+      _updateOrder('$url/updateToDispatched', order);
+
+  Future<ResponseApi> updateToOnTheWay(Order order) async =>
+      _updateOrder('$url/updateToOnTheWay', order);
+
+  Future<ResponseApi> updateToDelivered(Order order) async =>
+      _updateOrder('$url/updateToDelivered', order);
+
+  Future<ResponseApi> updateLatLng(Order order) async =>
+      _updateOrder('$url/updateLatLng', order);
+
+  Future<ResponseApi> _updateOrder(String endpoint, Order order) async {
+    await _loadUserSession();
+
+    final uri = Uri.parse(endpoint);
+    final response = await http.put(
+      uri,
       headers: {
-        "Content-type": 'application/json',
+        "Content-Type": 'application/json',
         "Authorization": 'JWT ${userSession.token ?? ''}',
       },
+      body: jsonEncode(order.toJson()),
     );
 
-    ResponseApi responseApi = ResponseApi.fromJson(response.body);
-    return responseApi;
-  }
-
-  Future<ResponseApi> updateToOnTheWay(Order order) async {
-    Response response = await put(
-      '$url/updateToOnTheWay',
-      order.toJson(),
-      headers: {
-        "Content-type": 'application/json',
-        "Authorization": 'JWT ${userSession.token ?? ''}',
-      },
-    );
-
-    ResponseApi responseApi = ResponseApi.fromJson(response.body);
-    return responseApi;
-  }
-
-  Future<ResponseApi> updateToDelivered(Order order) async {
-    Response response = await put(
-      '$url/updateToDelivered',
-      order.toJson(),
-      headers: {
-        "Content-type": 'application/json',
-        "Authorization": 'JWT ${userSession.token ?? ''}',
-      },
-    );
-
-    ResponseApi responseApi = ResponseApi.fromJson(response.body);
-    return responseApi;
-  }
-
-  Future<ResponseApi> updateLatLng(Order order) async {
-    Response response = await put(
-      '$url/updateLatLng',
-      order.toJson(),
-      headers: {
-        "Content-type": 'application/json',
-        "Authorization": 'JWT ${userSession.token ?? ''}',
-      },
-    );
-
-    ResponseApi responseApi = ResponseApi.fromJson(response.body);
-    return responseApi;
+    if (response.statusCode == 200) {
+      return ResponseApi.fromJson(jsonDecode(response.body));
+    } else {
+      return ResponseApi(
+        success: false,
+        message: 'Error al actualizar la orden',
+      );
+    }
   }
 }

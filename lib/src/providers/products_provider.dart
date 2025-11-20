@@ -4,79 +4,94 @@ import 'dart:io';
 import 'package:delivery_app/src/environment/environment.dart';
 import 'package:delivery_app/src/models/product.dart';
 import 'package:delivery_app/src/models/user.dart';
-import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path/path.dart';
 
-class ProductsProvider extends GetConnect {
-  String url = '${Environment.API_URL}api/products';
-  User userSession = User.fromJson(GetStorage().read('user') ?? {});
+class ProductsProvider {
+  final String url = '${Environment.API_URL}api/products';
+  late User userSession;
 
-  Future<List<Product>> findByCategory(String id_category) async {
-    Response response = await get(
-      '$url/findbyCategory/${id_category}',
+  ProductsProvider() {
+    _loadUserSession();
+  }
+
+  Future<void> _loadUserSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userJson = prefs.getString('user');
+    if (userJson != null) {
+      userSession = Product.fromJson(jsonDecode(userJson)) as User;
+    } else {
+      userSession = User();
+    }
+  }
+
+  Future<List<Product>> findByCategory(String idCategory) async {
+    await _loadUserSession();
+
+    final uri = Uri.parse('$url/findbyCategory/$idCategory');
+    final response = await http.get(
+      uri,
       headers: {
-        "Content-type": 'application/json',
+        "Content-Type": 'application/json',
         "Authorization": 'JWT ${userSession.token ?? ''}',
-        // "Authorization": userSession.token!
       },
     );
 
-    if (response.statusCode == 401) {
-      Get.snackbar(
-        'Peticion rechazada',
-        'Tu usuario no tiene permitido leer esta información',
-      );
-      return [];
+    if (response.statusCode == 200) {
+      final List<dynamic> body = jsonDecode(response.body);
+      return Product.fromJsonList(body);
+    } else if (response.statusCode == 401) {
+      throw Exception('Tu usuario no tiene permitido leer esta información');
+    } else {
+      throw Exception('Error al obtener productos por categoría');
     }
-
-    List<Product> products = Product.fromJsonList(response.body);
-    return products;
   }
 
   Future<List<Product>> findByNameAndCategory(
-    String id_category,
+    String idCategory,
     String name,
   ) async {
-    Response response = await get(
-      '$url/findbyCategory/${id_category}/${name}',
+    await _loadUserSession();
+
+    final uri = Uri.parse('$url/findbyCategory/$idCategory/$name');
+    final response = await http.get(
+      uri,
       headers: {
-        "Content-type": 'application/json',
+        "Content-Type": 'application/json',
         "Authorization": 'JWT ${userSession.token ?? ''}',
-        // "Authorization": userSession.token!
       },
     );
 
-    if (response.statusCode == 401) {
-      Get.snackbar(
-        'Peticion rechazada',
-        'Tu usuario no tiene permitido leer esta información',
-      );
-      return [];
+    if (response.statusCode == 200) {
+      final List<dynamic> body = jsonDecode(response.body);
+      return Product.fromJsonList(body);
+    } else if (response.statusCode == 401) {
+      throw Exception('Tu usuario no tiene permitido leer esta información');
+    } else {
+      throw Exception('Error al obtener productos por nombre y categoría');
     }
-
-    List<Product> products = Product.fromJsonList(response.body);
-    return products;
   }
 
-  Future<Stream> create(Product product, List<File> images) async {
-    Uri uri = Uri.parse('${Environment.API_URL}api/products/create');
-    final request = http.MultipartRequest('POST', uri);
-    request.headers['Authorization'] = 'JWT ${userSession.token}';
+  Future<Stream<String>> create(Product product, List<File> images) async {
+    await _loadUserSession();
 
-    for (int i = 0; i < images.length; i++) {
+    final uri = Uri.parse('${Environment.API_URL}api/products/create');
+    final request = http.MultipartRequest('POST', uri);
+    request.headers['Authorization'] = 'JWT ${userSession.token ?? ''}';
+
+    for (final image in images) {
       request.files.add(
-        http.MultipartFile(
+        await http.MultipartFile.fromPath(
           'image',
-          http.ByteStream(images[i].openRead().cast()),
-          await images[i].length(),
-          filename: basename(images[i].path),
+          image.path,
+          filename: basename(image.path),
         ),
       );
     }
 
-    request.fields['product'] = json.encode(product);
+    request.fields['product'] = jsonEncode(product.toJson());
+
     final response = await request.send();
     return response.stream.transform(utf8.decoder);
   }
