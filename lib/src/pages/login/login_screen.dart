@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:delivery_app/components/common/custom_filled_button.dart';
 import 'package:delivery_app/components/common/custom_text_form_field.dart';
+import 'package:go_router/go_router.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,6 +20,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool isLoading = false;
 
+  void _showSnack(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   Future<void> handleLogin() async {
     FocusScope.of(context).unfocus();
 
@@ -31,21 +38,23 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => isLoading = false);
 
-    // if (response == null) return;
-    print('🤖 handleLogin ${response?.toJson()}');
-    // if (response.success) {
-    //   // NAVEGAR A PANTALLA ROLES
-    //   Navigator.pushNamed(context, "/roles");
+    // Manejo si response viene null
+    if (response == null) {
+      _showSnack("Error inesperado");
+      return;
+    }
 
-    //   ScaffoldMessenger.of(
-    //     context,
-    //   ).showSnackBar(const SnackBar(content: Text("Inicio de sesión exitoso")));
-    // } else {
-    //   // MOSTRAR ERROR
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     SnackBar(content: Text(response.message ?? "Error desconocido")),
-    //   );
-    // }
+    print('🤖 handleLogin ${response.toJson()}');
+
+    // Éxito
+    if (response.success == true) {
+      _showSnack("Inicio de sesión exitoso");
+      context.go("/rol_screen");
+      return;
+    }
+
+    // Error
+    _showSnack(response.message ?? "Error desconocido");
   }
 
   void goToRegister() {

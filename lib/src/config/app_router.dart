@@ -1,7 +1,5 @@
-import 'package:delivery_app/src/pages/home/home_screen.dart';
-import 'package:delivery_app/src/pages/login/login_screen.dart';
+import 'package:delivery_app/src/pages/pages.dart';
 import 'package:go_router/go_router.dart';
-import '../pages/loading/loading_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/login_screen',
@@ -20,6 +18,11 @@ final appRouter = GoRouter(
       path: '/home_screen',
       name: 'home_screen',
       builder: (context, state) => HomeScreen(),
+    ),
+    GoRoute(
+      path: '/rol_screen',
+      name: 'rol_screen',
+      builder: (context, state) => RolScreen(),
     ),
   ],
   redirect: (context, state) {
