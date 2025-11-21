@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:delivery_app/src/environment/environment.dart';
+import 'package:delivery_app/src/models/categories/categorias_response.dart';
 import 'package:delivery_app/src/models/category.dart';
 import 'package:delivery_app/src/models/response_api.dart';
 import 'package:delivery_app/src/models/user.dart';
@@ -24,26 +25,35 @@ class CategoriesProvider {
     }
   }
 
-  Future<List<Category>> getAll() async {
-    await _loadUserSession(); // Asegurarse de tener la sesión cargada
+  Future<CategoriasResponse> getAll() async {
+    await _loadUserSession();
 
     final uri = Uri.parse('$url/getAll');
-    final response = await http.get(
+
+    final response = await http.post(
       uri,
       headers: {
         "Content-Type": 'application/json',
-        "Authorization": 'JWT ${userSession.token ?? ''}',
+        "Authorization": "JWT ${userSession.token ?? ''}",
       },
+      body: jsonEncode({"piEMPRESA": 1, "piTIENDA": 1, "piUSUARIO": 1}),
     );
 
+    // Debug útil
+    print("🟦 categories_provider response: ${response.body}");
+
     if (response.statusCode == 200) {
-      final List<dynamic> body = jsonDecode(response.body);
-      return Category.fromJsonList(body);
-    } else if (response.statusCode == 401) {
-      throw Exception('Tu usuario no tiene permitido leer esta información');
-    } else {
-      throw Exception('Error de conexión al obtener categorías');
+      final Map<String, dynamic> json = jsonDecode(response.body);
+
+      // Retornar TODA la respuesta tipada
+      return CategoriasResponse.fromJson(json);
     }
+
+    if (response.statusCode == 401) {
+      throw Exception("Tu usuario no tiene permitido leer esta información");
+    }
+
+    throw Exception("Error de conexión al obtener categorías");
   }
 
   Future<ResponseApi> create(Category category) async {

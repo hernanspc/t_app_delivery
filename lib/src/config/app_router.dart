@@ -1,3 +1,4 @@
+import 'package:delivery_app/src/pages/client/home/client_home_screen.dart';
 import 'package:delivery_app/src/pages/pages.dart';
 import 'package:go_router/go_router.dart';
 
@@ -15,9 +16,9 @@ final appRouter = GoRouter(
       builder: (context, state) => LoginScreen(),
     ),
     GoRoute(
-      path: '/home_screen',
-      name: 'home_screen',
-      builder: (context, state) => HomeScreen(),
+      path: '/client_home_screen',
+      name: 'client_home_screen',
+      builder: (context, state) => ClientHomePage(),
     ),
     GoRoute(
       path: '/rol_screen',
