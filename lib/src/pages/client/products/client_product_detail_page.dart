@@ -1,4 +1,4 @@
-import 'package:delivery_app/src/models/product.dart';
+import 'package:delivery_app/src/models/product/product.dart';
 import 'package:flutter/material.dart';
 
 class ClientProductDetailPage extends StatelessWidget {

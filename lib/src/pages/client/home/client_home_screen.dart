@@ -1,5 +1,6 @@
 import 'package:delivery_app/src/pages/client/orders/client_orders_list_page.dart';
 import 'package:delivery_app/src/pages/client/products/client_products_list_page.dart';
+import 'package:delivery_app/src/pages/client/products/client_products_list_page2.dart';
 import 'package:delivery_app/src/pages/client/profile/client_profile_info_page.dart';
 
 import 'package:delivery_app/src/utils/custom_animated_bottom_bar.dart';
@@ -32,6 +33,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
             index: currentIndex,
             children: [
               ClientProductsListPage(),
+              ClientProductsListPage2(),
               ClientOrdersListPage(),
               ClientProfileInfoPage(),
             ],
@@ -56,6 +58,12 @@ class _ClientHomePageState extends State<ClientHomePage> {
             BottomNavyBarItem(
               icon: const Icon(EvaIcons.home),
               title: const Text('Home'),
+              activeColor: Colors.white,
+              inactiveColor: Colors.black,
+            ),
+            BottomNavyBarItem(
+              icon: const Icon(EvaIcons.home),
+              title: const Text('Home2'),
               activeColor: Colors.white,
               inactiveColor: Colors.black,
             ),

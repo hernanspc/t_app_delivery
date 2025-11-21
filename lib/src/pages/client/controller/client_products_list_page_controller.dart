@@ -1,10 +1,10 @@
 import 'dart:async';
+import 'package:delivery_app/src/models/product/product.dart';
 import 'package:delivery_app/src/pages/client/products/client_product_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 import 'package:delivery_app/src/models/categories/categorias_response.dart';
-import 'package:delivery_app/src/models/product.dart';
 import 'package:delivery_app/src/providers/categories_providers.dart';
 import 'package:delivery_app/src/providers/products_provider.dart';
 
@@ -35,7 +35,7 @@ class ClientProductsListPageController extends ChangeNotifier {
 
   Future<void> _init() async {
     await getCategorias();
-    notifyListeners();
+    notifyListeners(); // ← SE NOTIFICA SOLO UNA VEZ DESPUÉS DE CARGAR
   }
 
   /// Busca con delay
@@ -50,18 +50,15 @@ class ClientProductsListPageController extends ChangeNotifier {
 
   /// Obtener categorías usando CategoriasResponse
   Future<void> getCategorias() async {
-    final response = await categoriesProvider.getAll();
+    final response = await categoriesProvider.getAllCategories(1, 1);
     categoriasResponse = response;
-    categorias = response.categorias; // ← Tipado correcto
-    notifyListeners();
+    categorias = response.categorias;
   }
 
   /// Obtener productos
-  Future<List<Product>> getProducts(String idCategory, String query) {
-    if (query.isEmpty) {
-      return productsProvider.findByCategory(idCategory);
-    }
-    return productsProvider.findByNameAndCategory(idCategory, query);
+  Future<List<Product>> getProducts(int idCategory) {
+    print("🔎 Buscando productos en categoría $idCategory");
+    return productsProvider.findByCategory(1, 1, idCategory);
   }
 
   /// Abrir detalle
@@ -75,5 +72,11 @@ class ClientProductsListPageController extends ChangeNotifier {
   /// Navegación tradicional
   void goToOrderCreate(BuildContext context) {
     Navigator.pushNamed(context, "/client/orders/create");
+  }
+
+  /// Recargar categorías manualmente
+  Future<void> reloadCategories() async {
+    await getCategorias();
+    notifyListeners(); // ← aquí sí
   }
 }
