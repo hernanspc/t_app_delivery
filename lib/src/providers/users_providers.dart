@@ -7,25 +7,10 @@ import 'package:delivery_app/src/models/response_api.dart';
 import 'package:delivery_app/src/models/user.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class UsersProvider {
   final String url = '${Environment.API_URL}api/users';
   late User userSession;
-
-  UsersProvider() {
-    _loadUserSession();
-  }
-
-  Future<void> _loadUserSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userJson = prefs.getString('user');
-    if (userJson != null) {
-      userSession = User.fromJson(jsonDecode(userJson));
-    } else {
-      userSession = User();
-    }
-  }
 
   // Crear usuario sin imagen
   Future<http.Response> create(User user) async {
@@ -39,7 +24,6 @@ class UsersProvider {
 
   // Actualizar token de notificación
   Future<ResponseApi> updateNotificationToken(String id, String token) async {
-    await _loadUserSession();
     final uri = Uri.parse('$url/updateNotificationToken');
 
     final response = await http.put(
@@ -63,7 +47,6 @@ class UsersProvider {
 
   // Actualizar usuario sin imagen
   Future<ResponseApi> update(User user) async {
-    await _loadUserSession();
     final uri = Uri.parse('$url/updateWithoutImage');
 
     final response = await http.put(
@@ -87,7 +70,6 @@ class UsersProvider {
 
   // Actualizar usuario con imagen
   Future<Stream<String>> updatedWithImage(User user, File image) async {
-    await _loadUserSession();
     final uri = Uri.parse('$url/update');
 
     final request = http.MultipartRequest('PUT', uri);
@@ -128,27 +110,22 @@ class UsersProvider {
   // Login
   Future<LoginResponse> login(String email, String password) async {
     final uri = Uri.parse('$url/login');
-    print(' 🟦 users_providers login: $uri');
+
     final response = await http.post(
       uri,
-      headers: {"Content-Type": 'application/json'},
+      headers: {"Content-Type": "application/json"},
       body: jsonEncode({
         "piEMPRESA": Environment.EMPRESA_CODE,
         "psUSUARIO": email,
         "clave": password,
       }),
     );
-    print('🟦 users_providers login: ${response.body}');
-    if (response.statusCode == 200 && response.body.isNotEmpty) {
-      return LoginResponse.fromJson(jsonDecode(response.body));
-    } else {
-      return LoginResponse.fromJson(jsonDecode(response.body));
-    }
+    print("🟦 users_providers login: ${response.body}");
+    return LoginResponse.fromJson(jsonDecode(response.body));
   }
 
   // Obtener repartidores
   Future<List<User>> findDeliveryMen() async {
-    await _loadUserSession();
     final uri = Uri.parse('$url/findDeliveryMen');
 
     final response = await http.get(

@@ -1,16 +1,16 @@
 class UserCompanyInfo {
-  final dynamic empresaId;
-  final dynamic empresaNombre;
-  final dynamic empresaDireccion;
-  final dynamic? empresaLogo;
-  final dynamic? empresaRuc;
-  final dynamic? empresaTelefono;
-  final dynamic usuarioId;
-  final dynamic usuario;
-  final dynamic usuarioTipoUsuario;
-  final dynamic tiendaId;
-  final dynamic tiendaNombre;
-  final dynamic tiendaTelefono;
+  final int empresaId;
+  final String empresaNombre;
+  final String empresaDireccion;
+  final String? empresaLogo;
+  final String? empresaRuc;
+  final String? empresaTelefono;
+  final int usuarioId;
+  final String usuario;
+  final String usuarioTipoUsuario;
+  final int tiendaId;
+  final String tiendaNombre;
+  final String tiendaTelefono;
 
   UserCompanyInfo({
     required this.empresaId,

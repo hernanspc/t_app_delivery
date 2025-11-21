@@ -1,10 +1,12 @@
 import 'package:delivery_app/src/models/product/product.dart';
 import 'package:delivery_app/src/pages/client/controller/client_products_list_page_controller.dart';
+import 'package:delivery_app/src/services/auth_service.dart';
 import 'package:delivery_app/src/widgets/loader_widget.dart';
 import 'package:delivery_app/src/widgets/no_data_widget.dart';
 import 'package:delivery_app/src/widgets/search_bar_you.dart';
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class ClientProductsListPage extends StatefulWidget {
   const ClientProductsListPage({super.key});
@@ -21,7 +23,9 @@ class _ClientProductsListPageState extends State<ClientProductsListPage>
   @override
   void initState() {
     super.initState();
-    con = ClientProductsListPageController();
+    final auth = Provider.of<AuthService>(context, listen: false);
+
+    con = ClientProductsListPageController(auth);
 
     con.addListener(() {
       if (mounted) {

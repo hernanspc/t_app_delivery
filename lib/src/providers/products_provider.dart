@@ -10,20 +10,6 @@ class ProductsProvider {
   final String url = '${Environment.API_URL}api/products';
   late User userSession;
 
-  ProductsProvider() {
-    _loadUserSession();
-  }
-
-  Future<void> _loadUserSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userJson = prefs.getString('user');
-    if (userJson != null) {
-      userSession = Product.fromJson(jsonDecode(userJson)) as User;
-    } else {
-      userSession = User();
-    }
-  }
-
   Future<List<Product>> findByCategory(
     int idTienda,
     int idUsuario,

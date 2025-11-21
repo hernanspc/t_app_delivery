@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:delivery_app/src/pages/login/controller/login_controller.dart';
+import 'package:delivery_app/src/services/auth_service.dart';
 import 'package:delivery_app/src/widgets/custom_modal.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:delivery_app/components/common/custom_filled_button.dart';
 import 'package:delivery_app/components/common/custom_text_form_field.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -41,6 +43,11 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (response.success == true) {
+      /// 🔥 1. Guarda sesión
+      final auth = Provider.of<AuthService>(context, listen: false);
+      print('🔴🔴${response.data[0]}');
+      await auth.saveUserSession(response.data.first);
+
       await _showCustomModal(
         title: "Mensaje",
         message: response.message ?? "Acceso correcto",
