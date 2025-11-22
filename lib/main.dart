@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:delivery_app/src/blocs/gps/gps_bloc.dart';
 import 'package:delivery_app/src/config/local_notifications/local_notifications.dart';
 import 'package:delivery_app/src/services/auth_service.dart';
 import 'package:flutter/material.dart';
@@ -29,10 +30,10 @@ void main() async {
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   FlutterNativeSplash.remove();
 
-  // pushNotificationProvider.initPushNotification();
-
   if (Firebase.apps.isEmpty) {
     await NotificationsBloc.initializeFCM();
+    pushNotificationProvider.initPushNotification();
+
     //TODO: COMENTAR EN EMULADOR IOS
     if (Platform.isAndroid) {
       await LocalNotifications.initializeLocalNotifications();
@@ -52,6 +53,9 @@ void main() async {
               authService: Provider.of<AuthService>(context, listen: false),
             ),
           ),
+          BlocProvider(
+            create: (context) => GpsBloc(),
+          ), //TODO IMPREMENTAR GPS MAS ADELANTE
         ],
         child: MyApp(),
       ),

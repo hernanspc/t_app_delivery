@@ -1,3 +1,6 @@
+import 'package:delivery_app/src/blocs/gps/gps_bloc.dart';
+import 'package:delivery_app/src/blocs/notifications/notifications_bloc.dart';
+import 'package:delivery_app/src/helpers/notification_permission_helper.dart';
 import 'package:delivery_app/src/pages/client/orders/client_orders_list_page.dart';
 import 'package:delivery_app/src/pages/client/products/client_products_list_page.dart';
 import 'package:delivery_app/src/pages/client/products/client_products_list_page2.dart';
@@ -5,7 +8,9 @@ import 'package:delivery_app/src/pages/client/profile/client_profile_info_page.d
 
 import 'package:delivery_app/src/utils/custom_animated_bottom_bar.dart';
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ClientHomePage extends StatefulWidget {
   const ClientHomePage({super.key});
@@ -20,6 +25,31 @@ class _ClientHomePageState extends State<ClientHomePage> {
 
   void changeTab(int index) {
     indexTab.value = index;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() async {
+      await _requestLocationPermission();
+      await _requestNotificationPermission();
+    });
+  }
+
+  Future<void> _requestNotificationPermission() async {
+    final settings = await FirebaseMessaging.instance.getNotificationSettings();
+    print("🔔 Estado permiso: ${settings.authorizationStatus}");
+    final notificationBloc = context.read<NotificationsBloc>();
+    notificationBloc.requestPermission();
+  }
+
+  Future<void> _requestLocationPermission() async {
+    final gpsBloc = context.read<GpsBloc>();
+
+    if (!gpsBloc.state.isGpsPermissionGranted) {
+      await gpsBloc.askGpsAccess();
+    }
   }
 
   @override

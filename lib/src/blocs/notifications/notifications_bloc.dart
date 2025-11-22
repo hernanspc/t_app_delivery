@@ -79,6 +79,17 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
 
   void _initialStatusCheck() async {
     final settings = await messaging.getNotificationSettings();
+    print('🟫🟫 Notification Settings:');
+    print('🔸 authorizationStatus: ${settings.authorizationStatus}');
+    print('🔸 alert: ${settings.alert}');
+    print('🔸 badge: ${settings.badge}');
+    print('🔸 sound: ${settings.sound}');
+    print('🔸 announcement: ${settings.announcement}');
+    print('🔸 carPlay: ${settings.carPlay}');
+    print('🔸 criticalAlert: ${settings.criticalAlert}');
+    print('🔸 lockScreen: ${settings.lockScreen}');
+    print('🔸 notificationCenter: ${settings.notificationCenter}');
+    print('🔸 timeSensitive: ${settings.timeSensitive}');
     add(NotificationStatusChanged(settings.authorizationStatus));
   }
 
@@ -91,6 +102,14 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
       await authService.saveDeviceToken(token);
     }
   }
+  // void getFCMToken() async {
+  //   final token = await messaging.getToken();
+  //   print('🔥 FCM Token: $token');
+
+  //   if (state.status == AuthorizationStatus.authorized && token != null) {
+  //     await authService.saveDeviceToken(token);
+  //   }
+  // }
 
   void handleRemoteMessage(RemoteMessage message) {
     if (message.notification == null) return;
@@ -134,7 +153,6 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
       sound: true,
     );
 
-    // Solicitar permiso a las local notifications
     if (requestLocalNotificationPermissions != null) {
       await requestLocalNotificationPermissions!();
     }

@@ -46,7 +46,13 @@ class _LoginScreenState extends State<LoginScreen> {
       /// 🔥 1. Guarda sesión
       final auth = Provider.of<AuthService>(context, listen: false);
       print('🔴🔴${response.data[0]}');
-      await auth.saveUserSession(response.data.first);
+      final userInfo = response.data.first;
+
+      // Guardar user + JWT generado localmente
+      await Provider.of<AuthService>(
+        context,
+        listen: false,
+      ).saveUserSession(userInfo);
 
       await _showCustomModal(
         title: "Mensaje",
