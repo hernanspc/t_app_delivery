@@ -1,5 +1,5 @@
 import 'package:delivery_app/components/common/color_extension.dart';
-import 'package:delivery_app/src/models/product/product.dart';
+import 'package:delivery_app/src/models/categories/categories_products_response.dart';
 import 'package:delivery_app/src/pages/client/controller/client_products_list_page_controller.dart';
 import 'package:delivery_app/src/pages/client/location/change_location_page.dart';
 import 'package:delivery_app/src/services/auth_service.dart';
@@ -191,68 +191,64 @@ class _ClientProductsListPageState extends State<ClientProductsListPage>
             ),
           ),
         ),
-        bottom: tabController == null
-            ? null
-            : TabBar(
-                controller: tabController,
-                isScrollable: true,
-                indicatorColor: Colors.amber,
-                labelColor: Colors.black,
-                unselectedLabelColor: Colors.grey[600],
-                tabs: List.generate(
-                  con.categorias.length,
-                  (i) => Tab(child: Text(con.categorias[i].nombre)),
-                ),
-              ),
       ),
     );
   }
 
   Widget _buildBody() {
-    if (tabController == null) {
-      return LoaderWidget(text: "Cargando categorías...");
-    }
+    return FutureBuilder<List<CategoryAndProductsAll>>(
+      future: con.getAllCategoriesAndProductsController(),
+      builder: (_, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return LoaderWidget(text: "Cargando categorías...");
+        }
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        await con.reloadCategories();
-        setState(() {});
-        print('🔄 Categorías recargadas');
-      },
-      child: TabBarView(
-        controller: tabController,
-        children: con.categorias.map((category) {
-          return ValueListenableBuilder(
-            valueListenable: con.productName,
-            builder: (_, __, ___) {
-              return FutureBuilder<List<Product>>(
-                future: con.getProducts(category.id),
-                builder: (_, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return LoaderWidget(text: "Cargando productos...");
-                  }
+        if (snapshot.hasError) {
+          return NoDataWidget(text: "Ocurrió un error al cargar.");
+        }
 
-                  if (snapshot.hasError) {
-                    return NoDataWidget(text: "Ocurrió un error al cargar.");
-                  }
+        final categorias = snapshot.data ?? [];
 
-                  final products = snapshot.data ?? [];
+        if (categorias.isEmpty) {
+          return NoDataWidget(text: "No hay categorías disponibles.");
+        }
 
-                  if (products.isEmpty) {
-                    return NoDataWidget(text: "No hay productos disponibles.");
+        // Configuramos el TabController dinámicamente
+        tabController ??= TabController(length: categorias.length, vsync: this);
+
+        return Column(
+          children: [
+            TabBar(
+              controller: tabController,
+              isScrollable: true,
+              indicatorColor: Colors.amber,
+              labelColor: Colors.black,
+              unselectedLabelColor: Colors.grey[600],
+              tabs: categorias.map((c) => Tab(text: c.nombre)).toList(),
+            ),
+            Expanded(
+              child: TabBarView(
+                controller: tabController,
+                children: categorias.map((categoria) {
+                  final productos = categoria.productos;
+
+                  if (productos.isEmpty) {
+                    return NoDataWidget(
+                      text: "No hay productos en esta categoría.",
+                    );
                   }
 
                   return ListView.builder(
                     padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: products.length,
-                    itemBuilder: (_, i) => _cardProduct(products[i]),
+                    itemCount: productos.length,
+                    itemBuilder: (_, i) => _cardProduct(productos[i]),
                   );
-                },
-              );
-            },
-          );
-        }).toList(),
-      ),
+                }).toList(),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -288,7 +284,7 @@ class _ClientProductsListPageState extends State<ClientProductsListPage>
     );
   }
 
-  Widget _cardProduct(Product product) {
+  Widget _cardProduct(ProductAll product) {
     return GestureDetector(
       onTap: () => con.openBottomSheet(context, product),
       child: Column(
@@ -325,7 +321,7 @@ class _ClientProductsListPageState extends State<ClientProductsListPage>
                     fit: BoxFit.cover,
                     fadeInDuration: const Duration(milliseconds: 50),
                     image: (product.rutaImagen != null)
-                        ? NetworkImage(product.rutaImagen)
+                        ? NetworkImage(product.rutaImagen!)
                         : const AssetImage('assets/img/no-image.png')
                               as ImageProvider,
                     placeholder: const AssetImage('assets/img/jar-loading.gif'),

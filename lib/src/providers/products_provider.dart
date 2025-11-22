@@ -1,22 +1,20 @@
 import 'dart:convert';
 
 import 'package:delivery_app/src/environment/environment.dart';
-import 'package:delivery_app/src/models/product/product.dart';
+import 'package:delivery_app/src/models/categories/categories_products_response.dart';
 import 'package:delivery_app/src/models/user.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ProductsProvider {
   final String url = '${Environment.API_URL}api/products';
   late User userSession;
 
-  Future<List<Product>> findByCategory(
-    int idTienda,
-    int idUsuario,
-    int idCategory,
-  ) async {
+  Future<List<CategoryAndProductsAll>> getAllCategoriesAndProducts({
+    required int idTienda,
+    required int idUsuario,
+  }) async {
     try {
-      final uri = Uri.parse('$url/findbyCategory');
+      final uri = Uri.parse('$url/getAllCategoriesAndProducts');
       final response = await http.post(
         uri,
         headers: {"Content-Type": 'application/json'},
@@ -24,25 +22,21 @@ class ProductsProvider {
           "piEMPRESA": Environment.EMPRESA_CODE,
           "piTIENDA": idTienda,
           "piUSUARIO": idUsuario,
-          "piCATEGORIA": idCategory,
         }),
       );
 
-      print('response findByCategory: ${response.body}');
-
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data is List) {
-          return Product.fromJsonList(data);
-        } else {
-          return [];
-        }
+        final decoded = jsonDecode(response.body);
+        final categoriasJson = decoded['data']['CATEGORIAS'] as List<dynamic>;
+        return categoriasJson
+            .map((c) => CategoryAndProductsAll.fromJson(c))
+            .toList();
       } else {
+        print("Error en getAllCategoriesAndProducts: ${response.statusCode}");
         return [];
       }
     } catch (e) {
-      print("ERROR findByCategory → $e");
+      print("ERROR getAllCategoriesAndProducts → $e");
       return [];
     }
   }

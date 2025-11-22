@@ -1,8 +1,8 @@
-import 'package:delivery_app/src/models/product/product.dart';
+import 'package:delivery_app/src/models/categories/categories_products_response.dart';
 import 'package:flutter/material.dart';
 
 class ClientProductDetailPage extends StatelessWidget {
-  const ClientProductDetailPage({super.key, required Product product});
+  const ClientProductDetailPage({super.key, required ProductAll product});
 
   @override
   Widget build(BuildContext context) {
