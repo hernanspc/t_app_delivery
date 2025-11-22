@@ -79,17 +79,6 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
 
   void _initialStatusCheck() async {
     final settings = await messaging.getNotificationSettings();
-    print('🟫🟫 Notification Settings:');
-    print('🔸 authorizationStatus: ${settings.authorizationStatus}');
-    print('🔸 alert: ${settings.alert}');
-    print('🔸 badge: ${settings.badge}');
-    print('🔸 sound: ${settings.sound}');
-    print('🔸 announcement: ${settings.announcement}');
-    print('🔸 carPlay: ${settings.carPlay}');
-    print('🔸 criticalAlert: ${settings.criticalAlert}');
-    print('🔸 lockScreen: ${settings.lockScreen}');
-    print('🔸 notificationCenter: ${settings.notificationCenter}');
-    print('🔸 timeSensitive: ${settings.timeSensitive}');
     add(NotificationStatusChanged(settings.authorizationStatus));
   }
 

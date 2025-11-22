@@ -1,12 +1,16 @@
 import 'package:delivery_app/components/common/color_extension.dart';
 import 'package:delivery_app/src/models/product/product.dart';
 import 'package:delivery_app/src/pages/client/controller/client_products_list_page_controller.dart';
+import 'package:delivery_app/src/pages/client/location/change_location_page.dart';
 import 'package:delivery_app/src/services/auth_service.dart';
+import 'package:delivery_app/src/utils/functions.dart';
 import 'package:delivery_app/src/widgets/loader_widget.dart';
 import 'package:delivery_app/src/widgets/no_data_widget.dart';
 import 'package:delivery_app/src/widgets/search_bar_you.dart';
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:provider/provider.dart';
 
 class ClientProductsListPage extends StatefulWidget {
@@ -20,6 +24,10 @@ class _ClientProductsListPageState extends State<ClientProductsListPage>
     with SingleTickerProviderStateMixin {
   late ClientProductsListPageController con;
   TabController? tabController;
+
+  Position? currentPosition;
+  bool isLoadingLocation = true;
+  String? addressLocation;
 
   @override
   void initState() {
@@ -50,6 +58,33 @@ class _ClientProductsListPageState extends State<ClientProductsListPage>
         print("👉 Cambiaste al TAB: ${category.nombre}");
       }
     });
+    _loadLocation();
+  }
+
+  Future<void> _loadLocation() async {
+    currentPosition = await getCurrentLocation();
+    print(' 📍 Ubicación actual: $currentPosition');
+    getAddress(
+      currentPosition?.latitude ?? 0,
+      currentPosition?.longitude ?? 0,
+    ).then((address) {
+      addressLocation = address;
+      print(' 🏠 Dirección obtenida: $address');
+    });
+
+    setState(() {
+      isLoadingLocation = false;
+    });
+  }
+
+  void openLocationBottomSheet(BuildContext context) {
+    showMaterialModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => const ChangeLocationPage(),
+    );
   }
 
   @override
@@ -59,7 +94,6 @@ class _ClientProductsListPageState extends State<ClientProductsListPage>
 
   PreferredSizeWidget _buildAppBar() {
     final auth = Provider.of<AuthService>(context, listen: false);
-
     String saludo = "👋 Hola! ${auth.user?.usuario}";
 
     return PreferredSize(
@@ -79,7 +113,7 @@ class _ClientProductsListPageState extends State<ClientProductsListPage>
                         saludo,
                         style: TextStyle(
                           color: TColor.primaryText,
-                          fontSize: 16,
+                          fontSize: 15,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -88,46 +122,61 @@ class _ClientProductsListPageState extends State<ClientProductsListPage>
                   ),
                 ),
                 const SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Entregando en",
-                        style: TextStyle(
-                          color: TColor.secondaryText,
-                          fontSize: 11,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Text(
-                            "ubicación actual",
-                            style: TextStyle(
-                              color: TColor.secondaryText,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
+                GestureDetector(
+                  onTap: () => openLocationBottomSheet(context),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Ícono de ubicación
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.redAccent.withOpacity(0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.location_on_rounded,
+                                color: Colors.redAccent,
+                                size: 18,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 10),
-                          GestureDetector(
-                            onTap: () {
-                              print("Cambiar ubicación");
-                            },
-                            child: Image.asset(
+
+                            const SizedBox(width: 10),
+
+                            // Dirección multilínea
+                            Expanded(
+                              child: Text(
+                                addressLocation ?? "Cargando dirección...",
+                                style: TextStyle(
+                                  color: TColor.primaryText,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                maxLines: 3,
+                                overflow: TextOverflow.visible,
+                                softWrap: true,
+                              ),
+                            ),
+
+                            // Dropdown (cambiar ubicación)
+                            const SizedBox(width: 10),
+                            Image.asset(
                               "assets/example/img/dropdown.png",
                               width: 12,
                               height: 12,
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
+
                 const SizedBox(height: 10),
                 Row(
                   children: [

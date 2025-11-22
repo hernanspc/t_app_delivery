@@ -1,6 +1,5 @@
 import 'package:delivery_app/src/blocs/gps/gps_bloc.dart';
 import 'package:delivery_app/src/blocs/notifications/notifications_bloc.dart';
-import 'package:delivery_app/src/helpers/notification_permission_helper.dart';
 import 'package:delivery_app/src/pages/client/orders/client_orders_list_page.dart';
 import 'package:delivery_app/src/pages/client/products/client_products_list_page.dart';
 import 'package:delivery_app/src/pages/client/products/client_products_list_page2.dart';
