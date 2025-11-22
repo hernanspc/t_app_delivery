@@ -29,10 +29,17 @@ class _ClientProductsListPageState extends State<ClientProductsListPage>
   bool isLoadingLocation = true;
   String? addressLocation;
 
+  late Future<List<CategoryAndProductsAll>> categoriasFuture;
+  int selectedCategoryIndex = 0;
+
   @override
   void initState() {
     super.initState();
     final auth = Provider.of<AuthService>(context, listen: false);
+    con = ClientProductsListPageController(auth);
+
+    // 🔹 solo se llama 1 vez al API
+    categoriasFuture = con.getAllCategoriesAndProductsController();
 
     con = ClientProductsListPageController(auth);
 
@@ -96,7 +103,7 @@ class _ClientProductsListPageState extends State<ClientProductsListPage>
     String saludo = "👋 Hola! ${auth.userSession?.usuario}";
 
     return PreferredSize(
-      preferredSize: const Size.fromHeight(240),
+      preferredSize: const Size.fromHeight(200),
       child: AppBar(
         flexibleSpace: SafeArea(
           child: Container(
@@ -197,7 +204,7 @@ class _ClientProductsListPageState extends State<ClientProductsListPage>
 
   Widget _buildBody() {
     return FutureBuilder<List<CategoryAndProductsAll>>(
-      future: con.getAllCategoriesAndProductsController(),
+      future: categoriasFuture, // 🔹 usamos el future cacheado
       builder: (_, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return LoaderWidget(text: "Cargando categorías...");
@@ -213,38 +220,106 @@ class _ClientProductsListPageState extends State<ClientProductsListPage>
           return NoDataWidget(text: "No hay categorías disponibles.");
         }
 
-        // Configuramos el TabController dinámicamente
-        tabController ??= TabController(length: categorias.length, vsync: this);
+        final selectedCategory = categorias[selectedCategoryIndex];
+        final productos = selectedCategory.productos;
 
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TabBar(
-              controller: tabController,
-              isScrollable: true,
-              indicatorColor: Colors.amber,
-              labelColor: Colors.black,
-              unselectedLabelColor: Colors.grey[600],
-              tabs: categorias.map((c) => Tab(text: c.nombre)).toList(),
-            ),
-            Expanded(
-              child: TabBarView(
-                controller: tabController,
-                children: categorias.map((categoria) {
-                  final productos = categoria.productos;
+            // 🔹 Chips horizontales
+            SizedBox(
+              height: 100, // altura máxima del chip
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                itemCount: categorias.length,
+                itemBuilder: (_, index) {
+                  final category = categorias[index];
+                  final isSelected = index == selectedCategoryIndex;
 
-                  if (productos.isEmpty) {
-                    return NoDataWidget(
-                      text: "No hay productos en esta categoría.",
-                    );
-                  }
-
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: productos.length,
-                    itemBuilder: (_, i) => _cardProduct(productos[i]),
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        selectedCategoryIndex = index; // solo cambia el índice
+                      });
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 8,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected ? Colors.amber : Colors.grey[200],
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isSelected ? Colors.amber : Colors.grey[400]!,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: category.rutaImagen != null
+                                ? Image.network(
+                                    category.rutaImagen!,
+                                    width: 40,
+                                    height: 40,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            Image.asset(
+                                              'assets/img/no-image.png',
+                                              width: 40,
+                                              height: 40,
+                                              fit: BoxFit.cover,
+                                            ),
+                                  )
+                                : Image.asset(
+                                    'assets/img/no-image.png',
+                                    width: 40,
+                                    height: 40,
+                                    fit: BoxFit.cover,
+                                  ),
+                          ),
+                          const SizedBox(height: 6),
+                          Flexible(
+                            child: Text(
+                              category.nombre,
+                              textAlign: TextAlign.center,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: isSelected ? Colors.white : Colors.black,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   );
-                }).toList(),
+                },
               ),
+            ),
+
+            const SizedBox(height: 8),
+
+            // 🔹 Lista de productos
+            Expanded(
+              child: productos.isEmpty
+                  ? NoDataWidget(text: "No hay productos en esta categoría.")
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: productos.length,
+                      itemBuilder: (_, i) => _cardProduct(productos[i]),
+                    ),
             ),
           ],
         );
@@ -337,6 +412,62 @@ class _ClientProductsListPageState extends State<ClientProductsListPage>
             endIndent: 30,
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryChips(List<CategoryAndProductsAll> categorias) {
+    return SizedBox(
+      height: 60,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        itemCount: categorias.length,
+        itemBuilder: (_, index) {
+          final category = categorias[index];
+          final isSelected = index == selectedCategoryIndex;
+
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                selectedCategoryIndex = index;
+              });
+            },
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.amber : Colors.grey[200],
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isSelected ? Colors.amber : Colors.grey[400]!,
+                ),
+              ),
+              child: Row(
+                children: [
+                  if (category.rutaImagen != null)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.network(
+                        category.rutaImagen!,
+                        width: 24,
+                        height: 24,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  if (category.rutaImagen != null) const SizedBox(width: 8),
+                  Text(
+                    category.nombre,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
