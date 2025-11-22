@@ -27,6 +27,42 @@ class UserCompanyInfo {
     required this.tiendaTelefono,
   });
 
+  // -------------------------------
+  // COPYWITH
+  // -------------------------------
+  UserCompanyInfo copyWith({
+    int? empresaId,
+    String? empresaNombre,
+    String? empresaDireccion,
+    String? empresaLogo,
+    String? empresaRuc,
+    String? empresaTelefono,
+    int? usuarioId,
+    String? usuario,
+    String? usuarioTipoUsuario,
+    int? tiendaId,
+    String? tiendaNombre,
+    String? tiendaTelefono,
+  }) {
+    return UserCompanyInfo(
+      empresaId: empresaId ?? this.empresaId,
+      empresaNombre: empresaNombre ?? this.empresaNombre,
+      empresaDireccion: empresaDireccion ?? this.empresaDireccion,
+      empresaLogo: empresaLogo ?? this.empresaLogo,
+      empresaRuc: empresaRuc ?? this.empresaRuc,
+      empresaTelefono: empresaTelefono ?? this.empresaTelefono,
+      usuarioId: usuarioId ?? this.usuarioId,
+      usuario: usuario ?? this.usuario,
+      usuarioTipoUsuario: usuarioTipoUsuario ?? this.usuarioTipoUsuario,
+      tiendaId: tiendaId ?? this.tiendaId,
+      tiendaNombre: tiendaNombre ?? this.tiendaNombre,
+      tiendaTelefono: tiendaTelefono ?? this.tiendaTelefono,
+    );
+  }
+
+  // -------------------------------
+  // FROM JSON
+  // -------------------------------
   factory UserCompanyInfo.fromJson(Map<dynamic, dynamic> json) {
     return UserCompanyInfo(
       empresaId: json["EMPRESA_ID"],
@@ -44,6 +80,9 @@ class UserCompanyInfo {
     );
   }
 
+  // -------------------------------
+  // TO JSON
+  // -------------------------------
   Map<String, dynamic> toJson() => {
     "EMPRESA_ID": empresaId,
     "EMPRESA_NOMBRE": empresaNombre,
@@ -58,4 +97,65 @@ class UserCompanyInfo {
     "TIENDA_NOMBRE": tiendaNombre,
     "TIENDA_TELEFONO": tiendaTelefono,
   };
+
+  // -------------------------------
+  // EQUALITY & HASHCODE
+  // -------------------------------
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is UserCompanyInfo &&
+        other.empresaId == empresaId &&
+        other.empresaNombre == empresaNombre &&
+        other.empresaDireccion == empresaDireccion &&
+        other.empresaLogo == empresaLogo &&
+        other.empresaRuc == empresaRuc &&
+        other.empresaTelefono == empresaTelefono &&
+        other.usuarioId == usuarioId &&
+        other.usuario == usuario &&
+        other.usuarioTipoUsuario == usuarioTipoUsuario &&
+        other.tiendaId == tiendaId &&
+        other.tiendaNombre == tiendaNombre &&
+        other.tiendaTelefono == tiendaTelefono;
+  }
+
+  @override
+  int get hashCode {
+    return empresaId.hashCode ^
+        empresaNombre.hashCode ^
+        empresaDireccion.hashCode ^
+        empresaLogo.hashCode ^
+        empresaRuc.hashCode ^
+        empresaTelefono.hashCode ^
+        usuarioId.hashCode ^
+        usuario.hashCode ^
+        usuarioTipoUsuario.hashCode ^
+        tiendaId.hashCode ^
+        tiendaNombre.hashCode ^
+        tiendaTelefono.hashCode;
+  }
+
+  // -------------------------------
+  // TOSTRING
+  // -------------------------------
+  @override
+  String toString() {
+    return '''
+UserCompanyInfo(
+  empresaId: $empresaId,
+  empresaNombre: $empresaNombre,
+  empresaDireccion: $empresaDireccion,
+  empresaLogo: $empresaLogo,
+  empresaRuc: $empresaRuc,
+  empresaTelefono: $empresaTelefono,
+  usuarioId: $usuarioId,
+  usuario: $usuario,
+  usuarioTipoUsuario: $usuarioTipoUsuario,
+  tiendaId: $tiendaId,
+  tiendaNombre: $tiendaNombre,
+  tiendaTelefono: $tiendaTelefono,
+)
+''';
+  }
 }

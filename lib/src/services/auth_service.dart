@@ -1,66 +1,111 @@
-import 'dart:convert';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
-import 'package:delivery_app/src/models/login/user_company_info.dart';
-import 'package:delivery_app/src/models/user_session/user_session.dart';
-import 'package:delivery_app/src/utils/functions.dart';
+import 'package:delivery_app/src/pages/login/controller/login_controller.dart';
+import 'package:delivery_app/src/utils/session_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:delivery_app/src/models/login/user_company_info.dart';
+import 'package:delivery_app/src/utils/functions.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class AuthService with ChangeNotifier {
-  UserCompanyInfo? user;
+  UserCompanyInfo? userSession;
   String? _jwt;
 
-  UserCompanyInfo? get userInfoSession => user;
+  // ----------------------------
+  // GETTERS
+  // ----------------------------
+  UserCompanyInfo? get userInfoSession => userSession;
   String? get token => _jwt;
+  bool get isLoggedIn => userSession != null && _jwt != null;
+  final LoginController _loginController = LoginController();
 
-  bool get isLoggedIn => user != null && _jwt != null;
-
-  static const _userKey = "USER_SESSION_DATA";
-  static const _tokenKey = "JWT_TOKEN";
-
-  Future<void> saveUserSession(UserCompanyInfo user) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    user = user;
-    _jwt = generateLocalJwt(userId: user.usuarioId);
-
-    await prefs.setString(_userKey, jsonEncode(user!.toJson()));
-    await prefs.setString(_tokenKey, _jwt!);
-
+  // ----------------------------
+  // Guardar sesión (solo memoria)
+  // ----------------------------
+  Future<void> saveUserSession(
+    UserCompanyInfo userInfo,
+    String usuario,
+    String clave,
+  ) async {
+    userSession = userInfo;
+    final tokenGenerated = await generateLocalJwt(
+      usuario: usuario,
+      clave: clave,
+    );
+    print('🌟 JWT Token generado: $tokenGenerated');
+    await SessionStorage.saveSessionJwt(tokenGenerated);
     notifyListeners();
   }
 
-  Future<void> loadUserSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedUser = prefs.getString(_userKey);
-    final savedToken = prefs.getString(_tokenKey);
+  // ----------------------------
+  // Validar sesión
+  // ----------------------------
+  Future<bool> checkSession() async {
+    final token = await SessionStorage.getSessionJwt();
+    print('⭐️ isLoggedIn token: $token');
 
-    if (savedUser != null && savedToken != null) {
-      user = UserCompanyInfo.fromJson(jsonDecode(savedUser));
-      _jwt = savedToken;
-      notifyListeners();
+    if (token == null || token.isEmpty) {
+      print('token es null o vacío');
+      await SessionStorage.removeSessionJwt();
+      return false;
+    }
+
+    if (!JwtDecoder.isExpired(token)) {
+      final decoded = JwtDecoder.decode(token);
+      print('✅ Token válido: $decoded  ${userSession?.toJson()}');
+      return true;
+    } else {
+      print('❌ Token expirado');
+      await SessionStorage.removeSessionJwt();
+      return false;
     }
   }
 
-  void logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_userKey);
-    await prefs.remove(_tokenKey);
+  // ----------------------------
+  // Cargar usuario (solo memoria)
+  // ----------------------------
+  Future<void> getCurrentUser() async {
+    final token = await SessionStorage.getSessionJwt();
+    if (token == null || token.isEmpty) return;
 
-    user = null;
-    _jwt = null;
-    notifyListeners();
+    final Map<String, dynamic> decoded = JwtDecoder.decode(token);
+
+    final response = await _loginController.login(
+      email: decoded['usuario'],
+      password: decoded['clave'],
+    );
+    print("🟩 AuthService.getCurrentUser: ${response.toJson()}");
+    userSession = response.data.first;
+
+    saveUserSession(userSession!, decoded['usuario'], decoded['clave']);
   }
 
+  // ----------------------------
+  // Logout
+  // ----------------------------
+  void logout() {
+    userSession = null;
+    _jwt = null;
+    notifyListeners();
+    print('🔴 Sesión cerrada');
+  }
+
+  // ----------------------------
+  // Validar expiración del token
+  // ----------------------------
   bool get isTokenExpired {
     if (_jwt == null) return true;
     try {
-      final jwt = JWT.verify(_jwt!, SecretKey('clave_secreta_local'));
-      return false; // válido
-    } catch (e) {
-      return true; // expirado o inválido
+      JWT.verify(_jwt!, SecretKey('clave_secreta_local'));
+      return false;
+    } catch (_) {
+      return true;
     }
   }
 
-  Future<void> saveDeviceToken(String tokenDevice) async {}
+  // ----------------------------
+  // Token dispositivo (vacío)
+  // ----------------------------
+  Future<void> saveDeviceToken(String tokenDevice) async {
+    print('🔔 saveDeviceToken llamado: $tokenDevice');
+  }
 }

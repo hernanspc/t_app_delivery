@@ -83,6 +83,18 @@ class _MyAppState extends State<MyApp> {
 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        brightness: Brightness.light,
+        primaryColor: Colors.amber,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.amber,
+          brightness: Brightness.light,
+        ),
+        appBarTheme: AppBarTheme(
+          // backgroundColor: Colors.amber,
+          foregroundColor: Colors.white,
+        ),
+      ),
       localizationsDelegates: [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

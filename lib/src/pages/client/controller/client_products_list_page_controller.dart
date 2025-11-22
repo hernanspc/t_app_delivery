@@ -54,8 +54,8 @@ class ClientProductsListPageController extends ChangeNotifier {
 
   /// Obtener categorías usando CategoriasResponse
   Future<void> getCategorias() async {
-    final tiendaId = auth.user?.tiendaId ?? 0;
-    final usuarioId = auth.user?.usuarioId ?? 0;
+    final tiendaId = auth.userSession?.tiendaId ?? 0;
+    final usuarioId = auth.userSession?.usuarioId ?? 0;
 
     print(
       '🌈 Obteniendo categorías para tiendaId: $tiendaId y usuarioId: $usuarioId',
@@ -71,8 +71,8 @@ class ClientProductsListPageController extends ChangeNotifier {
 
   /// Obtener productos
   Future<List<Product>> getProducts(int idCategory) {
-    final tiendaId = auth.user?.tiendaId ?? 0;
-    final usuarioId = auth.user?.usuarioId ?? 0;
+    final tiendaId = auth.userSession?.tiendaId ?? 0;
+    final usuarioId = auth.userSession?.usuarioId ?? 0;
 
     print("🔎 Buscando productos en categoría $idCategory");
     return productsProvider.findByCategory(tiendaId, usuarioId, idCategory);

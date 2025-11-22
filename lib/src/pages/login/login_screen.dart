@@ -31,10 +31,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => isLoading = true);
 
-    final response = await controller.login(
-      email: emailController.text.trim(),
-      password: passwordController.text.trim(),
-    );
+    final usuario = emailController.text.trim();
+    final clave = passwordController.text.trim();
+
+    final response = await controller.login(email: usuario, password: clave);
 
     setState(() => isLoading = false);
 
@@ -49,10 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final userInfo = response.data.first;
 
       // Guardar user + JWT generado localmente
-      await Provider.of<AuthService>(
-        context,
-        listen: false,
-      ).saveUserSession(userInfo);
+      await auth.saveUserSession(userInfo, usuario, clave);
 
       await _showCustomModal(
         title: "Mensaje",
@@ -167,6 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           children: [
             _titleForm(),
+            const SizedBox(height: 10),
             _textFieldEmail(),
             const SizedBox(height: 10),
             _textFieldPassword(),
@@ -179,7 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _titleForm() {
     return const Text(
-      "Ingresa tu información",
+      "Ingresa",
       style: TextStyle(
         fontSize: 17,
         fontWeight: FontWeight.bold,

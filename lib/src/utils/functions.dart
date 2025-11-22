@@ -2,9 +2,15 @@ import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:geocoding/geocoding.dart' as Geocoding;
 import 'package:geolocator/geolocator.dart';
 
-String generateLocalJwt({required int userId, int durationMinutes = 60}) {
+Future<String> generateLocalJwt({
+  required String usuario,
+  required String clave,
+  int durationMinutes = 60,
+}) async {
   final jwt = JWT({
-    'userId': userId,
+    'usuario': usuario,
+    'clave': clave,
+
     'iat': DateTime.now().millisecondsSinceEpoch ~/ 1000,
     'exp':
         DateTime.now()
@@ -12,8 +18,8 @@ String generateLocalJwt({required int userId, int durationMinutes = 60}) {
             .millisecondsSinceEpoch ~/
         1000,
   });
-
-  return jwt.sign(SecretKey('clave_secreta_local'));
+  const secretKey = 'YOUR_SECRET_KEY';
+  return jwt.sign(SecretKey(secretKey));
 }
 
 Future<String> getAddress(double latitude, double longitude) async {

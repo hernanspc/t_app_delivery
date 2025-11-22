@@ -109,6 +109,7 @@ class UsersProvider {
 
   // Login
   Future<LoginResponse> login(String email, String password) async {
+    print('🟦 input : $email $password');
     final uri = Uri.parse('$url/login');
 
     final response = await http.post(

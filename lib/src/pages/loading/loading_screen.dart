@@ -20,14 +20,14 @@ class _LoadingScreenState extends State<LoadingScreen> {
   Future<void> _checkSession() async {
     final authService = Provider.of<AuthService>(context, listen: false);
 
-    // Carga la sesión desde SharedPreferences
-    await authService.loadUserSession();
+    final autenticado = await authService.checkSession();
+    print('autenticado $autenticado');
 
-    // Verifica si hay sesión válida
-    if (authService.isLoggedIn && !authService.isTokenExpired) {
+    if (autenticado) {
+      await authService.getCurrentUser(); // ⚡ aquí se hace "login" en memoria
       context.go('/client_home_screen');
     } else {
-      authService.logout(); // Limpia cualquier sesión inválida
+      authService.logout();
       context.go('/login_screen');
     }
   }
